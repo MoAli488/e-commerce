@@ -1,14 +1,19 @@
-console.log("Hellsso from typescript");
-let app: number = 10;
-if (app < 20){
-    app += 20;
-}
+import express from 'express';
 
-function abc(b: number) {
-    console.log(typeof b)
-}
+import dotenv from 'dotenv';
+import shopRouter from './routes/shop.js';
+import authRouter from './routes/auth.js';
 
-let user: [number, string] = [1, "ss"];
-user.push(2);
+dotenv.config();
+const app = express();
+app.use(express.json());
 
-abc(app);
+app.get('/', (req, res, next) => {
+  res.status(200).json({ message: 'Welcome to the website!' });
+});
+app.use('/shop', shopRouter);
+app.use('/auth', authRouter);
+
+app.listen(process.env.PORT || 8080, () => {
+  console.log(`Server is running on http://localhost:${process.env.PORT}/`);
+});
