@@ -1,3 +1,11 @@
+import sequelize from '../util/database.js';
+import { Model, DataTypes } from 'sequelize';
+import type {
+  InferAttributes,
+  InferCreationAttributes,
+  CreationOptional,
+} from 'sequelize';
+
 export enum City {
   CAIRO = 'CAIRO',
   ZATOUN = 'ZATOUN',
@@ -5,12 +13,50 @@ export enum City {
   MARG = 'MARG',
 }
 
-export default interface User {
-  _id: number;
-  name: string;
-  email: string;
-  password: string;
-  phone: string;
-  address: string;
-  city: City;
+class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
+  declare id: CreationOptional<number>;
+  declare name: string;
+  declare email: string;
+  declare password: string;
+  declare phone: string;
+  declare address: string;
+  declare city: string;
 }
+
+User.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING,
+      unique: true,
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    phone: {
+      type: DataTypes.STRING,
+    },
+    address: {
+      type: DataTypes.STRING,
+    },
+    city: {
+      type: DataTypes.STRING,
+    },
+  },
+  {
+    sequelize,
+    modelName: 'User',
+    timestamps: true,
+  },
+);
+
+export default User;
