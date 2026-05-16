@@ -2,6 +2,7 @@ import type { RequestHandler } from 'express';
 import User from '../models/user.js';
 import { City } from '../models/user.js';
 import bcrypt from 'bcryptjs';
+import cloudinary from '../util/cloudinary.js';
 
 type RequestBody = {
   name: string;
@@ -35,6 +36,7 @@ export const signup: RequestHandler = async (req, res, next) => {
       name: name,
       email: email,
       password: hashPw,
+      image: null,
       phone: phone,
       address: address,
       city: city.toUpperCase() as City,

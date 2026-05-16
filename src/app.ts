@@ -1,5 +1,4 @@
 import express from 'express';
-
 import sequelize from './util/database.js';
 import dotenv from 'dotenv';
 import shopRouter from './routes/shop.js';
@@ -30,7 +29,7 @@ app.use(
 );
 
 try {
-  await sequelize.sync();
+  await sequelize.sync({ force: false });
   console.log('Database synced successfully.');
   app.listen(process.env.PORT || 8080, () => {
     console.log(`Server is running on http://localhost:${process.env.PORT}/`);

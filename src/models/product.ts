@@ -5,6 +5,7 @@ import type {
   InferCreationAttributes,
   CreationOptional,
 } from 'sequelize';
+import { AllowNull } from 'sequelize-typescript';
 
 export enum ProductCategory {
   ELECTRONICS = 'ELECTRONICS',
@@ -25,6 +26,7 @@ class Product extends Model<
   declare id: CreationOptional<number>;
   declare name: string;
   declare price: number;
+  declare image: { url: string; public_id: string };
   declare description: string;
   declare category: string;
 }
@@ -43,6 +45,10 @@ Product.init(
     },
     price: {
       type: DataTypes.REAL,
+      allowNull: false,
+    },
+    image: {
+      type: DataTypes.JSONB,
       allowNull: false,
     },
     description: {

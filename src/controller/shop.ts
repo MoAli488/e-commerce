@@ -1,6 +1,7 @@
 import type { RequestHandler } from 'express';
 import Product from '../models/product.js';
 import { ProductCategory } from '../models/product.js';
+import cloudinary from '../util/cloudinary.js';
 
 type RequestBody = {
   name: string;
@@ -57,18 +58,29 @@ export const getProduct: RequestHandler = async (req, res, next) => {
 export const postProduct: RequestHandler = async (req, res, next) => {
   const body = req.body as RequestBody;
   const name = body.name;
-  const price = body.price;
+  const price: number = +body.price;
   const description = body.description;
   const category = body.category;
 
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+
+  const fileBase64 = req.file.buffer.toString('base64');
+  const fileUri = `data:${req.file.mimetype};base64,${fileBase64}`;
+
   try {
+    const result = await cloudinary.uploader.upload(fileUri, {
+      folder: 'ecommerce',
+    });
+
     const newProduct = await Product.create({
       name: name,
       price: price,
+      image: { url: result.secure_url, public_id: result.public_id },
       description: description,
       category: category.toUpperCase() as ProductCategory,
     });
-
     res.status(201).json({ message: 'Product Created!', prod: newProduct });
   } catch (err: any) {
     if (!err.statusCode) {
@@ -87,11 +99,24 @@ export const putProduct: RequestHandler = async (req, res, next) => {
     if (!product)
       return res.status(404).json({ message: 'Product not found.' });
 
+    let image = product.image;
+
     const body = req.body as RequestBody;
+
+    if (req.file) {
+      cloudinary.uploader.destroy(image.public_id);
+      const fileBase64 = req.file.buffer.toString('base64');
+      const fileUri = `data:${req.file.mimetype};base64,${fileBase64}`;
+      const result = await cloudinary.uploader.upload(fileUri, {
+        folder: 'ecommerce',
+      });
+      image = { url: result.secure_url, public_id: result.public_id };
+    }
 
     product.set({
       name: body.name,
-      price: body.price,
+      price: +body.price,
+      image: image,
       description: body.description,
       category: body.category as ProductCategory,
     });
@@ -116,6 +141,7 @@ export const deleteProduct: RequestHandler = async (req, res, next) => {
     if (!product)
       return res.status(404).json({ message: 'Product not found.' });
 
+    cloudinary.uploader.destroy(product.image.public_id);
     await product.destroy();
 
     res.status(200).json({ message: 'Product Deleted!', product: product });

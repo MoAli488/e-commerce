@@ -18,6 +18,7 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare name: string;
   declare email: string;
   declare password: string;
+  declare image: { url: string; public_id: string } | null;
   declare phone: string;
   declare address: string;
   declare city: string;
@@ -41,6 +42,9 @@ User.init(
     password: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    image: {
+      type: DataTypes.JSONB,
     },
     phone: {
       type: DataTypes.STRING,
