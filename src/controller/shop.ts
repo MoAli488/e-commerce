@@ -2,6 +2,7 @@ import type { RequestHandler } from 'express';
 import Product from '../models/product.js';
 import { ProductCategory } from '../models/product.js';
 import cloudinary from '../util/cloudinary.js';
+import { validationResult } from 'express-validator';
 
 type RequestBody = {
   name: string;
@@ -10,6 +11,11 @@ type RequestBody = {
   category: string;
 };
 type RequestParams = { prodId: string };
+
+type err = {
+  message: string;
+  statusCode?: number;
+};
 
 export const getHome: RequestHandler = async (req, res, next) => {
   try {
@@ -42,10 +48,20 @@ export const getProducts: RequestHandler = async (req, res, next) => {
 export const getProduct: RequestHandler = async (req, res, next) => {
   const params = req.params as RequestParams;
   const prodId = params.prodId;
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    const error: err = new Error('Validation Error.');
+    error.statusCode = 422;
+    throw error;
+  }
   try {
     const product = await Product.findByPk(prodId);
-    if (!product)
-      return res.status(404).json({ message: 'Product not found.' });
+    if (!product) {
+      const error: err = new Error('Product not found.');
+      error.statusCode = 404;
+      throw error;
+    }
     res.status(200).json({ product: product });
   } catch (err: any) {
     if (!err.statusCode) {
@@ -61,9 +77,18 @@ export const postProduct: RequestHandler = async (req, res, next) => {
   const price: number = +body.price;
   const description = body.description;
   const category = body.category;
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    const error: err = new Error('Validation Error.');
+    error.statusCode = 422;
+    throw error;
+  }
 
   if (!req.file) {
-    return res.status(400).json({ message: 'No file uploaded' });
+    const error: err = new Error('No file uploaded.');
+    error.statusCode = 400;
+    throw error;
   }
 
   const fileBase64 = req.file.buffer.toString('base64');
@@ -93,11 +118,21 @@ export const postProduct: RequestHandler = async (req, res, next) => {
 export const putProduct: RequestHandler = async (req, res, next) => {
   const params = req.params as RequestParams;
   const prodId = params.prodId;
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    const error: err = new Error('Validation Error.');
+    error.statusCode = 422;
+    throw error;
+  }
 
   try {
     const product = await Product.findByPk(prodId);
-    if (!product)
-      return res.status(404).json({ message: 'Product not found.' });
+    if (!product) {
+      const error: err = new Error('Product not found.');
+      error.statusCode = 404;
+      throw error;
+    }
 
     let image = product.image;
 
@@ -135,11 +170,21 @@ export const putProduct: RequestHandler = async (req, res, next) => {
 export const deleteProduct: RequestHandler = async (req, res, next) => {
   const params = req.params as RequestParams;
   const prodId = params.prodId;
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    const error: err = new Error('Validation Error.');
+    error.statusCode = 422;
+    throw error;
+  }
 
   try {
     const product = await Product.findByPk(prodId);
-    if (!product)
-      return res.status(404).json({ message: 'Product not found.' });
+    if (!product) {
+      const error: err = new Error('Product not found.');
+      error.statusCode = 404;
+      throw error;
+    }
 
     cloudinary.uploader.destroy(product.image.public_id);
     await product.destroy();

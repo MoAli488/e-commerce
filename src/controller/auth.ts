@@ -1,7 +1,7 @@
 import type { RequestHandler } from 'express';
 import User from '../models/user.js';
-import { City } from '../models/user.js';
 import bcrypt from 'bcryptjs';
+import { validationResult } from 'express-validator';
 import cloudinary from '../util/cloudinary.js';
 
 type RequestBody = {
@@ -14,6 +14,11 @@ type RequestBody = {
 };
 type RequestParams = { userId: string };
 
+type err = {
+  message: string;
+  statusCode?: number;
+};
+
 export const signup: RequestHandler = async (req, res, next) => {
   const body = req.body as RequestBody;
   const name = body.name;
@@ -22,14 +27,16 @@ export const signup: RequestHandler = async (req, res, next) => {
   const phone = body.phone;
   const address = body.address;
   const city = body.city;
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    console.log(errors);
+    const error: err = new Error('Validation Error.');
+    error.statusCode = 422;
+    throw error;
+  }
 
   try {
-    const user: User | null = await User.findOne({ where: { email: email } });
-
-    if (user) {
-      return res.status(422).json({ message: 'User already exist.' });
-    }
-
     const hashPw: string = await bcrypt.hash(password, 12);
 
     const newUser = await User.create({
@@ -39,7 +46,7 @@ export const signup: RequestHandler = async (req, res, next) => {
       image: null,
       phone: phone,
       address: address,
-      city: city.toUpperCase() as City,
+      city: city.toUpperCase(),
     });
 
     res.status(201).json({ message: 'User Created!', user: newUser });
@@ -55,6 +62,13 @@ export const login: RequestHandler = async (req, res, next) => {
   const body = req.body as RequestBody;
   const email = body.email;
   const password = body.password;
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    const error: err = new Error('Validation Error.');
+    error.statusCode = 422;
+    throw error;
+  }
 
   try {
     const user: User | null = await User.findOne({ where: { email: email } });
@@ -83,6 +97,13 @@ export const login: RequestHandler = async (req, res, next) => {
 export const deleteUser: RequestHandler = async (req, res, next) => {
   const params = req.params as RequestParams;
   const userId = +params.userId;
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    const error: err = new Error('Validation Error.');
+    error.statusCode = 422;
+    throw error;
+  }
 
   try {
     const user: User | null = await User.findByPk(userId);

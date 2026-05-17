@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import upload from '../util/multerUpload.js';
 import * as shopController from '../controller/shop.js';
+import { body, param } from 'express-validator';
+import { ProductCategory } from '../models/product.js';
 
 const router = Router();
+
+const validCategory = new Set(Object.values(ProductCategory));
 
 // GET Home Page shop
 router.get('/', shopController.getHome);
@@ -11,19 +15,86 @@ router.get('/', shopController.getHome);
 router.get('/products', shopController.getProducts);
 
 // GET Product
-router.get('/product/:prodId', shopController.getProduct);
+router.get(
+  '/product/:prodId',
+  param('userId').trim().isNumeric().escape(),
+  shopController.getProduct,
+);
 
 // POST Product
-router.post('/product/', upload.single('image'), shopController.postProduct);
+router.post(
+  '/product/',
+  upload.single('image'),
+  [
+    body('name')
+      .trim()
+      .notEmpty()
+      .withMessage('Name is required')
+      .isLength({ min: 2 })
+      .escape(),
+    body('price')
+      .trim()
+      .notEmpty()
+      .withMessage('Price is required')
+      .isNumeric(),
+    body('description').trim().escape(),
+    body('category')
+      .trim()
+      .notEmpty()
+      .withMessage('Category is required')
+      .custom((val: any) => {
+        if (typeof val !== 'string') {
+          throw new Error('Category must be a string');
+        }
+        if (!validCategory.has(val.toUpperCase() as ProductCategory)) {
+          throw new Error('Invalid category value');
+        }
+        return true;
+      }),
+  ],
+  shopController.postProduct,
+);
 
 // PUT Product
 router.put(
   '/product/:prodId',
   upload.single('image'),
+  [
+    param('userId').trim().isNumeric().escape(),
+    body('name')
+      .trim()
+      .notEmpty()
+      .withMessage('Name is required')
+      .isLength({ min: 2 })
+      .escape(),
+    body('price')
+      .trim()
+      .notEmpty()
+      .withMessage('Price is required')
+      .isNumeric(),
+    body('description').trim().escape(),
+    body('category')
+      .trim()
+      .notEmpty()
+      .withMessage('Category is required')
+      .custom((val: any) => {
+        if (typeof val !== 'string') {
+          throw new Error('Category must be a string');
+        }
+        if (!validCategory.has(val.toUpperCase() as ProductCategory)) {
+          throw new Error('Invalid category value');
+        }
+        return true;
+      }),
+  ],
   shopController.putProduct,
 );
 
 // DELETE Product
-router.delete('/product/:prodId', shopController.deleteProduct);
+router.delete(
+  '/product/:prodId',
+  param('userId').trim().isNumeric().escape(),
+  shopController.deleteProduct,
+);
 
 export default router;

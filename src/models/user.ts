@@ -6,12 +6,12 @@ import type {
   CreationOptional,
 } from 'sequelize';
 
-export enum City {
-  CAIRO = 'CAIRO',
-  ZATOUN = 'ZATOUN',
-  HAWAMDEIA = 'HAWAMDEIA',
-  MARG = 'MARG',
-}
+// export enum City {
+//   CAIRO = 'CAIRO',
+//   ZATOUN = 'ZATOUN',
+//   HAWAMDEIA = 'HAWAMDEIA',
+//   MARG = 'MARG',
+// }
 
 class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare id: CreationOptional<number>;
