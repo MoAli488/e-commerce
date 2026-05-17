@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as authController from '../controller/auth.js';
+import * as authController from '../controllers/auth.js';
 import { body, param } from 'express-validator';
 import User from '../models/user.js';
 

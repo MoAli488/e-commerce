@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import upload from '../util/multerUpload.js';
-import * as shopController from '../controller/shop.js';
+import * as shopController from '../controllers/shop.js';
 import { body, param } from 'express-validator';
 import { ProductCategory } from '../models/product.js';
 
