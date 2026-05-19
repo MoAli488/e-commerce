@@ -3,6 +3,7 @@ import User from '../models/user.js';
 import bcrypt from 'bcryptjs';
 import { validationResult } from 'express-validator';
 import cloudinary from '../util/cloudinary.js';
+import jwt from 'jsonwebtoken';
 
 type RequestBody = {
   name: string;
@@ -74,7 +75,9 @@ export const login: RequestHandler = async (req, res, next) => {
     const user: User | null = await User.findOne({ where: { email: email } });
 
     if (!user) {
-      return res.status(404).json({ message: 'User does not exist.' });
+      const error: err = new Error('User does not exist.');
+      error.statusCode = 404;
+      throw error;
     }
 
     const hashedPw = user.password;
@@ -82,10 +85,16 @@ export const login: RequestHandler = async (req, res, next) => {
     const isEqual: boolean = await bcrypt.compare(password, hashedPw);
 
     if (!isEqual) {
-      return res.status(401).json({ message: 'Invalid password.' });
+      const error: err = new Error('Invalid password.');
+      error.statusCode = 401;
+      throw error;
     }
-    // TODO: add JWT after login
-    res.status(200).json({ message: 'Login successful!', userId: user.id });
+    const token = jwt.sign({ userId: user.id }, `${process.env.JWT_SECRET}`, {
+      expiresIn: '1h',
+    });
+    res
+      .status(200)
+      .json({ message: 'Login successful!', userId: user.id, token: token });
   } catch (err: any) {
     if (!err.statusCode) {
       err.statusCode = 500;
@@ -99,6 +108,12 @@ export const deleteUser: RequestHandler = async (req, res, next) => {
   const userId = +params.userId;
   const errors = validationResult(req);
 
+  if (userId !== (req.user!.id as number)) {
+    const error: err = new Error('Not Authorized.');
+    error.statusCode = 403;
+    throw error;
+  }
+
   if (!errors.isEmpty()) {
     const error: err = new Error('Validation Error.');
     error.statusCode = 422;
@@ -109,11 +124,12 @@ export const deleteUser: RequestHandler = async (req, res, next) => {
     const user: User | null = await User.findByPk(userId);
 
     if (!user) {
-      res.status(404).json({ message: 'User does not exist.' });
-    } else {
-      await user.destroy();
-      res.status(200).json({ message: 'User Deleted.', user: user });
+      const error: err = new Error('User does not exist.');
+      error.statusCode = 404;
+      throw error;
     }
+    await user.destroy();
+    res.status(200).json({ message: 'User Deleted.', user: user });
   } catch (err: any) {
     if (!err.statusCode) {
       err.statusCode = 500;

@@ -4,14 +4,13 @@ import type {
   InferAttributes,
   InferCreationAttributes,
   CreationOptional,
+  HasManyGetAssociationsMixin,
+  HasManyAddAssociationMixin,
+  HasManyHasAssociationMixin,
+  HasManyCountAssociationsMixin,
+  HasManyCreateAssociationMixin,
 } from 'sequelize';
-
-// export enum City {
-//   CAIRO = 'CAIRO',
-//   ZATOUN = 'ZATOUN',
-//   HAWAMDEIA = 'HAWAMDEIA',
-//   MARG = 'MARG',
-// }
+import type Product from './product.js';
 
 class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare id: CreationOptional<number>;
@@ -22,6 +21,12 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare phone: string;
   declare address: string;
   declare city: string;
+
+  declare getProducts: HasManyGetAssociationsMixin<Product>;
+  declare addProduct: HasManyAddAssociationMixin<Product, number>;
+  declare hasProduct: HasManyHasAssociationMixin<Product, number>;
+  declare countProducts: HasManyCountAssociationsMixin;
+  declare createProduct: HasManyCreateAssociationMixin<Product, 'UserId'>;
 }
 
 User.init(
@@ -38,6 +43,9 @@ User.init(
     email: {
       type: DataTypes.STRING,
       unique: true,
+      validate: {
+        isEmail: true,
+      },
     },
     password: {
       type: DataTypes.STRING,

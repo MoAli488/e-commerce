@@ -3,6 +3,7 @@ import upload from '../util/multerUpload.js';
 import * as shopController from '../controllers/shop.js';
 import { body, param } from 'express-validator';
 import { ProductCategory } from '../models/product.js';
+import isAuth from '../middleware/is-auth.js';
 
 const router = Router();
 
@@ -17,13 +18,14 @@ router.get('/products', shopController.getProducts);
 // GET Product
 router.get(
   '/product/:prodId',
-  param('userId').trim().isNumeric().escape(),
+  param('prodId').trim().isNumeric().escape(),
   shopController.getProduct,
 );
 
 // POST Product
 router.post(
   '/product/',
+  isAuth,
   upload.single('image'),
   [
     body('name')
@@ -58,9 +60,10 @@ router.post(
 // PUT Product
 router.put(
   '/product/:prodId',
+  isAuth,
   upload.single('image'),
   [
-    param('userId').trim().isNumeric().escape(),
+    param('prodId').trim().isNumeric().escape(),
     body('name')
       .trim()
       .notEmpty()
@@ -93,7 +96,8 @@ router.put(
 // DELETE Product
 router.delete(
   '/product/:prodId',
-  param('userId').trim().isNumeric().escape(),
+  isAuth,
+  param('prodId').trim().isNumeric().escape(),
   shopController.deleteProduct,
 );
 

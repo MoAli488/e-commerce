@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as authController from '../controllers/auth.js';
 import { body, param } from 'express-validator';
 import User from '../models/user.js';
+import isAuth from '../middleware/is-auth.js';
 
 const router = Router();
 
@@ -60,9 +61,12 @@ router.post(
   authController.login,
 );
 
+// TODO: add edit user route
+
 // DELETE user
 router.delete(
   '/delete/:userId',
+  isAuth,
   param('userId').trim().isNumeric().escape(),
   authController.deleteUser,
 );

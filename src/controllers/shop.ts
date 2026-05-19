@@ -3,6 +3,7 @@ import Product from '../models/product.js';
 import { ProductCategory } from '../models/product.js';
 import cloudinary from '../util/cloudinary.js';
 import { validationResult } from 'express-validator';
+import type User from '../models/user.js';
 
 type RequestBody = {
   name: string;
@@ -99,7 +100,7 @@ export const postProduct: RequestHandler = async (req, res, next) => {
       folder: 'ecommerce',
     });
 
-    const newProduct = await Product.create({
+    const newProduct = await req.user!.createProduct({
       name: name,
       price: price,
       image: { url: result.secure_url, public_id: result.public_id },
@@ -131,6 +132,12 @@ export const putProduct: RequestHandler = async (req, res, next) => {
     if (!product) {
       const error: err = new Error('Product not found.');
       error.statusCode = 404;
+      throw error;
+    }
+
+    if (product.UserId !== req.user!.id) {
+      const error: err = new Error('Not authorized!');
+      error.statusCode = 403;
       throw error;
     }
 
@@ -183,6 +190,12 @@ export const deleteProduct: RequestHandler = async (req, res, next) => {
     if (!product) {
       const error: err = new Error('Product not found.');
       error.statusCode = 404;
+      throw error;
+    }
+
+    if (product.UserId !== req.user!.id) {
+      const error: err = new Error('Not authorized!');
+      error.statusCode = 403;
       throw error;
     }
 

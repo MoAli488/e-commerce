@@ -1,10 +1,10 @@
+import 'dotenv/config';
 import express from 'express';
 import sequelize from './util/database.js';
-import dotenv from 'dotenv';
 import shopRouter from './routes/shop.js';
 import authRouter from './routes/auth.js';
-
-dotenv.config();
+import Product from './models/product.js';
+import User from './models/user.js';
 const app = express();
 app.use(express.json());
 
@@ -37,6 +37,11 @@ app.use(
     res.status(status).json({ message: message });
   },
 );
+
+User.hasMany(Product, { onDelete: 'CASCADE' });
+Product.belongsTo(User, {
+  onDelete: 'CASCADE',
+});
 
 try {
   await sequelize.sync({ alter: true });

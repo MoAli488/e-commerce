@@ -4,8 +4,9 @@ import type {
   InferAttributes,
   InferCreationAttributes,
   CreationOptional,
+  ForeignKey,
 } from 'sequelize';
-import { AllowNull } from 'sequelize-typescript';
+import type User from './user.js';
 
 export enum ProductCategory {
   ELECTRONICS = 'ELECTRONICS',
@@ -17,21 +18,19 @@ export enum ProductCategory {
   OTHER = 'OTHER',
 }
 
-// 1. Declare your class extending Model with the proper inferences
 class Product extends Model<
   InferAttributes<Product>,
   InferCreationAttributes<Product>
 > {
-  // 'CreationOptional' is used for fields that are auto-generated or have defaults (like primary keys)
   declare id: CreationOptional<number>;
   declare name: string;
   declare price: number;
   declare image: { url: string; public_id: string };
   declare description: string;
   declare category: string;
+  declare UserId: ForeignKey<User['id']>;
 }
 
-// 2. Initialize the model schema directly onto the class instead of using sequelize.define()
 Product.init(
   {
     id: {
@@ -60,8 +59,8 @@ Product.init(
     },
   },
   {
-    sequelize, // Pass the connection instance here
-    modelName: 'Product', // The name of the model
+    sequelize,
+    modelName: 'Product',
     timestamps: true,
   },
 );
