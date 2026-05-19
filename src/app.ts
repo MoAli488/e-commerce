@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import cloudinary from './util/cloudinary.js';
 import express from 'express';
 import sequelize from './util/database.js';
 import shopRouter from './routes/shop.js';
@@ -44,7 +45,7 @@ Product.belongsTo(User, {
 });
 
 try {
-  await sequelize.sync({ alter: true });
+  await sequelize.sync({ force: true });
   console.log('Database synced successfully.');
   app.listen(process.env.PORT || 8080, () => {
     console.log(`Server is running on http://localhost:${process.env.PORT}/`);

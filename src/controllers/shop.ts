@@ -3,7 +3,6 @@ import Product from '../models/product.js';
 import { ProductCategory } from '../models/product.js';
 import cloudinary from '../util/cloudinary.js';
 import { validationResult } from 'express-validator';
-import type User from '../models/user.js';
 
 type RequestBody = {
   name: string;
@@ -199,7 +198,6 @@ export const deleteProduct: RequestHandler = async (req, res, next) => {
       throw error;
     }
 
-    cloudinary.uploader.destroy(product.image.public_id);
     await product.destroy();
 
     res.status(200).json({ message: 'Product Deleted!', product: product });

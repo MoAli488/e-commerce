@@ -1,5 +1,6 @@
 import sequelize from '../util/database.js';
 import { Model, DataTypes } from 'sequelize';
+import cloudinary from '../util/cloudinary.js';
 import type {
   InferAttributes,
   InferCreationAttributes,
@@ -68,6 +69,21 @@ User.init(
     sequelize,
     modelName: 'User',
     timestamps: true,
+    hooks: {
+      beforeDestroy: async (user) => {
+        // Dynamically import Product to avoid circular dependency
+        const { default: Product } = await import('./product.js');
+
+        await Product.destroy({
+          where: { UserId: user.id },
+          individualHooks: true,
+        });
+
+        if (user.image?.public_id) {
+          await cloudinary.uploader.destroy(user.image.public_id);
+        }
+      },
+    },
   },
 );
 

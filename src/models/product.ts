@@ -1,5 +1,6 @@
 import sequelize from '../util/database.js';
 import { Model, DataTypes } from 'sequelize';
+import cloudinary from '../util/cloudinary.js';
 import type {
   InferAttributes,
   InferCreationAttributes,
@@ -62,6 +63,13 @@ Product.init(
     sequelize,
     modelName: 'Product',
     timestamps: true,
+    hooks: {
+      beforeDestroy: async (product) => {
+        if (product.image?.public_id) {
+          await cloudinary.uploader.destroy(product.image.public_id);
+        }
+      },
+    },
   },
 );
 
