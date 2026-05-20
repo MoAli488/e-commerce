@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { validationResult } from 'express-validator';
 import cloudinary from '../util/cloudinary.js';
 import jwt from 'jsonwebtoken';
+import transport from '../util/email.js';
 
 type RequestBody = {
   name: string;
@@ -49,6 +50,16 @@ export const signup: RequestHandler = async (req, res, next) => {
       address: address,
       city: city.toUpperCase(),
     });
+    await newUser.createCart();
+
+    const mail = {
+      from: 'ecommerce785848@gmail.com',
+      to: newUser.email,
+      subject: 'Welcome to my ecommerce website!',
+      text: `Hello ${newUser.name.split(' ')[0]}! welcome to my ecommerce website, Signup Successfully!`,
+    };
+
+    // transport.sendMail(mail);
 
     res.status(201).json({ message: 'User Created!', user: newUser });
   } catch (err: any) {
@@ -92,6 +103,16 @@ export const login: RequestHandler = async (req, res, next) => {
     const token = jwt.sign({ userId: user.id }, `${process.env.JWT_SECRET}`, {
       expiresIn: '1h',
     });
+
+    const mail = {
+      from: 'ecommerce785848@gmail.com',
+      to: user.email,
+      subject: 'Login',
+      html: '<h1>Login Success!</h1>',
+    };
+
+    // transport.sendMail(mail);
+
     res
       .status(200)
       .json({ message: 'Login successful!', userId: user.id, token: token });

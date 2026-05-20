@@ -3,6 +3,7 @@ import Product from '../models/product.js';
 import { ProductCategory } from '../models/product.js';
 import cloudinary from '../util/cloudinary.js';
 import { validationResult } from 'express-validator';
+import Cart from '../models/cart.js';
 
 type RequestBody = {
   name: string;
@@ -201,6 +202,81 @@ export const deleteProduct: RequestHandler = async (req, res, next) => {
     await product.destroy();
 
     res.status(200).json({ message: 'Product Deleted!', product: product });
+  } catch (err: any) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    throw err;
+  }
+};
+
+export const getCart: RequestHandler = async (req, res, next) => {
+  try {
+    const cart = await req.user!.getCart();
+    const result = await cart.getProducts();
+
+    res.status(200).json({ message: 'Cart fetched.', cart: result });
+  } catch (err: any) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    throw err;
+  }
+};
+
+export const addCart: RequestHandler = async (req, res, next) => {
+  const params = req.params as RequestParams;
+  const prodId = params.prodId;
+  let newQuantity = 1;
+  try {
+    let product;
+    const cart = await req.user!.getCart();
+    const cartProducts = await cart.getProducts({ where: { id: prodId } });
+    if (cartProducts.length > 0) {
+      product = cartProducts[0] as Product & {
+        CartItem: { quantity: number };
+      };
+      // console.log(product);
+      newQuantity = product.CartItem.quantity + 1;
+    } else {
+      product = await Product.findByPk(prodId);
+    }
+    if (!product) {
+      const error: err = new Error('Product not found.');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const result = await cart.addProduct(product, {
+      through: { quantity: newQuantity },
+    });
+
+    res.status(200).json({ message: 'Product added to the cart.', cart: cart });
+  } catch (err: any) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    throw err;
+  }
+};
+
+export const deleteCart: RequestHandler = async (req, res, next) => {
+  const params = req.params as RequestParams;
+  const prodId = params.prodId;
+  try {
+    let product;
+    const cart = await req.user!.getCart();
+    const cartProducts = await cart.getProducts({ where: { id: prodId } });
+    if (cartProducts.length > 0) {
+      product = cartProducts[0] as Product & {
+        CartItem: { quantity: number; destroy: () => Promise<void> };
+      };
+      await product.CartItem.destroy();
+    }
+
+    res
+      .status(200)
+      .json({ message: 'Product deleted from the cart.', cart: cart });
   } catch (err: any) {
     if (!err.statusCode) {
       err.statusCode = 500;

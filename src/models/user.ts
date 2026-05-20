@@ -2,18 +2,25 @@ import sequelize from '../util/database.js';
 import { Model, DataTypes } from 'sequelize';
 import cloudinary from '../util/cloudinary.js';
 import type {
+  HasManyAddAssociationMixin,
+  HasManyCountAssociationsMixin,
+  HasManyCreateAssociationMixin,
+  HasManyGetAssociationsMixin,
+  HasManyHasAssociationMixin,
+  HasOneGetAssociationMixin,
+  HasOneCreateAssociationMixin,
   InferAttributes,
   InferCreationAttributes,
   CreationOptional,
-  HasManyGetAssociationsMixin,
-  HasManyAddAssociationMixin,
-  HasManyHasAssociationMixin,
-  HasManyCountAssociationsMixin,
-  HasManyCreateAssociationMixin,
+  NonAttribute,
 } from 'sequelize';
 import type Product from './product.js';
+import Cart from './cart.js';
 
-class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
+class User extends Model<
+  InferAttributes<User, { omit: 'products' }>,
+  InferCreationAttributes<User, { omit: 'products' }>
+> {
   declare id: CreationOptional<number>;
   declare name: string;
   declare email: string;
@@ -23,11 +30,15 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare address: string;
   declare city: string;
 
+  declare products?: NonAttribute<Product[]>;
+
   declare getProducts: HasManyGetAssociationsMixin<Product>;
   declare addProduct: HasManyAddAssociationMixin<Product, number>;
   declare hasProduct: HasManyHasAssociationMixin<Product, number>;
   declare countProducts: HasManyCountAssociationsMixin;
   declare createProduct: HasManyCreateAssociationMixin<Product, 'UserId'>;
+  declare getCart: HasOneGetAssociationMixin<Cart>;
+  declare createCart: HasOneCreateAssociationMixin<Cart>;
 }
 
 User.init(

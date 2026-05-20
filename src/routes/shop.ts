@@ -101,4 +101,20 @@ router.delete(
   shopController.deleteProduct,
 );
 
+router.get('/cart', isAuth, shopController.getCart);
+
+router.post(
+  '/cart/:prodId',
+  isAuth,
+  param('prodId').trim().isNumeric().escape(),
+  shopController.addCart,
+);
+
+router.delete(
+  '/cart/:prodId',
+  isAuth,
+  param('prodId').trim().isNumeric().escape(),
+  shopController.deleteCart,
+);
+
 export default router;

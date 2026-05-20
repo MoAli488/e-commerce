@@ -6,6 +6,8 @@ import shopRouter from './routes/shop.js';
 import authRouter from './routes/auth.js';
 import Product from './models/product.js';
 import User from './models/user.js';
+import Cart from './models/cart.js';
+import CartItem from './models/cart-item.js';
 const app = express();
 app.use(express.json());
 
@@ -39,10 +41,16 @@ app.use(
   },
 );
 
-User.hasMany(Product, { onDelete: 'CASCADE' });
+User.hasMany(Product);
 Product.belongsTo(User, {
   onDelete: 'CASCADE',
 });
+
+User.hasOne(Cart, { onDelete: 'CASCADE' });
+// Cart.belongsTo(User);
+
+Cart.belongsToMany(Product, { through: CartItem });
+Product.belongsToMany(Cart, { through: CartItem });
 
 try {
   await sequelize.sync({ force: true });
