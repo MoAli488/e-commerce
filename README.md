@@ -1,4 +1,4 @@
-# E-Commerce Backend API (Under Development)
+# E-Commerce Backend API
 
 A robust and scalable e-commerce backend API built with **Node.js, Express, TypeScript, and PostgreSQL**. This project serves as the foundational backend for an e-commerce platform, providing essential features like user authentication, product management, and secure image uploads.
 
