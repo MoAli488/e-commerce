@@ -4,6 +4,8 @@ import type Product from './product.js';
 import type {
   BelongsToManyAddAssociationMixin,
   BelongsToManyGetAssociationsMixin,
+  BelongsToManyRemoveAssociationsMixin,
+  BelongsToManySetAssociationsMixin,
   InferAttributes,
   InferCreationAttributes,
   CreationOptional,
@@ -14,6 +16,8 @@ class Cart extends Model<InferAttributes<Cart>, InferCreationAttributes<Cart>> {
 
   declare getProducts: BelongsToManyGetAssociationsMixin<Product>;
   declare addProduct: BelongsToManyAddAssociationMixin<Product, number>;
+  declare removeProducts: BelongsToManyRemoveAssociationsMixin<Product, number>;
+  declare setProducts: BelongsToManySetAssociationsMixin<Product, number>;
 }
 
 Cart.init(

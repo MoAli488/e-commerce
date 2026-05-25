@@ -3,7 +3,7 @@ import Product from '../models/product.js';
 import { ProductCategory } from '../models/product.js';
 import cloudinary from '../util/cloudinary.js';
 import { validationResult } from 'express-validator';
-import Cart from '../models/cart.js';
+import { Op } from 'sequelize';
 
 type RequestBody = {
   name: string;
@@ -33,10 +33,47 @@ export const getHome: RequestHandler = async (req, res, next) => {
 };
 
 export const getProducts: RequestHandler = async (req, res, next) => {
+  const query = req.query;
+  const category = query.category ? String(query.category) : 'all';
+  const name = query.name ? String(query.name) : undefined;
+  const price = query.price ? Number(query.price) : undefined;
+  const priceOp = query.op ? String(query.op) : 'eq';
+
+  const whereClause: any = {};
+
+  if (category && category !== 'all') {
+    whereClause.category = category.toUpperCase() as ProductCategory;
+  }
+
+  if (name) {
+    whereClause.name = { [Op.iLike]: `%${name}%` };
+  }
+
+  if (price !== undefined && !isNaN(price)) {
+    switch (priceOp) {
+      case 'gt':
+        whereClause.price = { [Op.gt]: price };
+        break;
+      case 'gte':
+        whereClause.price = { [Op.gte]: price };
+        break;
+      case 'lt':
+        whereClause.price = { [Op.lt]: price };
+        break;
+      case 'lte':
+        whereClause.price = { [Op.lte]: price };
+        break;
+      default:
+        whereClause.price = price;
+    }
+  }
+
   try {
-    const prods = (await Product.findAll()).map((user) => {
-      return user.toJSON();
-    });
+    const prods = (await Product.findAll({ where: whereClause })).map(
+      (prod) => {
+        return prod.toJSON();
+      },
+    );
     res.status(200).json({ products: prods });
   } catch (err: any) {
     if (!err.statusCode) {
@@ -236,7 +273,6 @@ export const addCart: RequestHandler = async (req, res, next) => {
       product = cartProducts[0] as Product & {
         CartItem: { quantity: number };
       };
-      // console.log(product);
       newQuantity = product.CartItem.quantity + 1;
     } else {
       product = await Product.findByPk(prodId);
@@ -277,6 +313,49 @@ export const deleteCart: RequestHandler = async (req, res, next) => {
     res
       .status(200)
       .json({ message: 'Product deleted from the cart.', cart: cart });
+  } catch (err: any) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    throw err;
+  }
+};
+
+export const getOrder: RequestHandler = async (req, res, next) => {
+  try {
+    const orders = await req.user!.getOrders({ include: Product });
+    res.status(200).json({ orders: orders });
+  } catch (err: any) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    throw err;
+  }
+};
+
+export const postOrder: RequestHandler = async (req, res, next) => {
+  try {
+    const cart = await req.user!.getCart();
+    const products = await cart.getProducts();
+    if (products.length == 0) {
+      return res.status(400).json({ message: 'empty cart.' });
+    }
+    const order = await req.user!.createOrder();
+    type ProdOrderType = Product & {
+      OrderItem: { quantity: number };
+      CartItem: { quantity: number };
+    };
+    const newOrder = await order.addProducts(
+      products.map((p) => {
+        const product = p as ProdOrderType;
+        product.OrderItem = { quantity: product.CartItem.quantity };
+        return product;
+      }),
+    );
+    await cart.setProducts([]);
+    res
+      .status(201)
+      .json({ message: 'Order created successfully!', order: newOrder });
   } catch (err: any) {
     if (!err.statusCode) {
       err.statusCode = 500;

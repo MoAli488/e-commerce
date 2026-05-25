@@ -16,6 +16,7 @@ import type {
 } from 'sequelize';
 import type Product from './product.js';
 import Cart from './cart.js';
+import type Order from './order.js';
 
 class User extends Model<
   InferAttributes<User, { omit: 'products' }>,
@@ -39,6 +40,8 @@ class User extends Model<
   declare createProduct: HasManyCreateAssociationMixin<Product, 'UserId'>;
   declare getCart: HasOneGetAssociationMixin<Cart>;
   declare createCart: HasOneCreateAssociationMixin<Cart>;
+  declare createOrder: HasManyCreateAssociationMixin<Order>;
+  declare getOrders: HasManyGetAssociationsMixin<Order>;
 }
 
 User.init(

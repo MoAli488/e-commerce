@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import upload from '../util/multerUpload.js';
 import * as shopController from '../controllers/shop.js';
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import { ProductCategory } from '../models/product.js';
 import isAuth from '../middleware/is-auth.js';
 
@@ -13,7 +13,19 @@ const validCategory = new Set(Object.values(ProductCategory));
 router.get('/', shopController.getHome);
 
 // GET All Products
-router.get('/products', shopController.getProducts);
+router.get(
+  '/products',
+  query('category')
+    .optional()
+    .trim()
+    .custom((val) => {
+      if (!validCategory.has(val.toUpperCase as ProductCategory)) {
+        throw Error('the value is NOT a product category.');
+      }
+      return true;
+    }),
+  shopController.getProducts,
+);
 
 // GET Product
 router.get(
@@ -116,5 +128,9 @@ router.delete(
   param('prodId').trim().isNumeric().escape(),
   shopController.deleteCart,
 );
+
+router.get('/order', isAuth, shopController.getOrder);
+
+router.post('/order', isAuth, shopController.postOrder);
 
 export default router;
