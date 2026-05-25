@@ -129,8 +129,10 @@ router.delete(
   shopController.deleteCart,
 );
 
+router.post('/checkout', isAuth, shopController.postCheckout);
+
 router.get('/order', isAuth, shopController.getOrder);
 
-router.post('/order', isAuth, shopController.postOrder);
+router.get('/orders', isAuth, shopController.getOrders);
 
 export default router;

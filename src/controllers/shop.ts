@@ -4,12 +4,14 @@ import { ProductCategory } from '../models/product.js';
 import cloudinary from '../util/cloudinary.js';
 import { validationResult } from 'express-validator';
 import { Op } from 'sequelize';
+import Stripe from 'stripe';
 
 type RequestBody = {
   name: string;
   price: number;
   description: string;
   category: string;
+  currency?: string;
 };
 type RequestParams = { prodId: string };
 
@@ -17,6 +19,8 @@ type err = {
   message: string;
   statusCode?: number;
 };
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
 export const getHome: RequestHandler = async (req, res, next) => {
   try {
@@ -34,6 +38,10 @@ export const getHome: RequestHandler = async (req, res, next) => {
 
 export const getProducts: RequestHandler = async (req, res, next) => {
   const query = req.query;
+  const page =
+    query.page && !isNaN(Number(query.page)) ? Number(query.page) : 1;
+  const numPerPage =
+    query.num && !isNaN(Number(query.num)) ? Number(query.num) : 100;
   const category = query.category ? String(query.category) : 'all';
   const name = query.name ? String(query.name) : undefined;
   const price = query.price ? Number(query.price) : undefined;
@@ -69,11 +77,15 @@ export const getProducts: RequestHandler = async (req, res, next) => {
   }
 
   try {
-    const prods = (await Product.findAll({ where: whereClause })).map(
-      (prod) => {
-        return prod.toJSON();
-      },
-    );
+    const prods = (
+      await Product.findAll({
+        where: whereClause,
+        limit: numPerPage,
+        offset: (page - 1) * numPerPage,
+      })
+    ).map((prod) => {
+      return prod.toJSON();
+    });
     res.status(200).json({ products: prods });
   } catch (err: any) {
     if (!err.statusCode) {
@@ -321,10 +333,39 @@ export const deleteCart: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const getOrder: RequestHandler = async (req, res, next) => {
+export const postCheckout: RequestHandler = async (req, res, next) => {
   try {
-    const orders = await req.user!.getOrders({ include: Product });
-    res.status(200).json({ orders: orders });
+    const body = req.body as RequestBody;
+    const cart = await req.user!.getCart();
+    const products = await cart.getProducts();
+    if (products.length == 0) {
+      return res.status(400).json({ message: 'empty cart.' });
+    }
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: products.map((p) => {
+        const product = p as Product & {
+          CartItem: { quantity: number };
+        };
+        return {
+          price_data: {
+            currency: body?.currency || 'egp',
+            product_data: {
+              name: product.name,
+              description: product.description,
+              images: product.image.url ? [product.image.url] : [],
+            },
+            unit_amount: product.price * 100,
+          },
+          quantity: product.CartItem.quantity,
+        };
+      }),
+      mode: 'payment',
+      success_url: req.protocol + '://' + req.get('host') + '/shop/order/',
+      cancel_url: req.protocol + '://' + req.get('host') + '/shop/cart/',
+    });
+
+    res.status(200).json({ url: session.url });
   } catch (err: any) {
     if (!err.statusCode) {
       err.statusCode = 500;
@@ -333,7 +374,7 @@ export const getOrder: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const postOrder: RequestHandler = async (req, res, next) => {
+export const getOrder: RequestHandler = async (req, res, next) => {
   try {
     const cart = await req.user!.getCart();
     const products = await cart.getProducts();
@@ -356,6 +397,18 @@ export const postOrder: RequestHandler = async (req, res, next) => {
     res
       .status(201)
       .json({ message: 'Order created successfully!', order: newOrder });
+  } catch (err: any) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    throw err;
+  }
+};
+
+export const getOrders: RequestHandler = async (req, res, next) => {
+  try {
+    const orders = await req.user!.getOrders({ include: Product });
+    res.status(200).json({ orders: orders });
   } catch (err: any) {
     if (!err.statusCode) {
       err.statusCode = 500;
