@@ -1,6 +1,6 @@
 # E-Commerce Backend API (Under Development)
 
-A robust and scalable e-commerce backend API built with **Node.js, Express, TypeScript, and PostgreSQL**. This project serves as the foundational backend for an e-commerce platform, providing essential features like user authentication, product management, and secure image uploads. 
+A robust and scalable e-commerce backend API built with **Node.js, Express, TypeScript, and PostgreSQL**. This project serves as the foundational backend for an e-commerce platform, providing essential features like user authentication, product management, and secure image uploads.
 
 > **Note:** This project is currently **under active development** and is not yet 100% complete. Features are continuously being added and refined.
 
@@ -12,6 +12,7 @@ A robust and scalable e-commerce backend API built with **Node.js, Express, Type
 - **Database:** PostgreSQL
 - **ORM:** Sequelize
 - **Authentication:** JSON Web Tokens (JWT) & bcryptjs
+- **Payments:** Stripe API
 - **Image Storage:** Cloudinary & Multer
 - **Validation:** express-validator
 - **Testing:** Mocha & Chai
@@ -26,22 +27,22 @@ A robust and scalable e-commerce backend API built with **Node.js, Express, Type
   - Create, read, update, and delete products.
   - Image upload integration with Cloudinary.
   - Categorization of products.
+  - Pagination, search by name, and category/price filtering for efficient browsing.
+- **Cart & Order Management**
+  - Add products to cart and manage quantities.
+  - Convert carts to orders.
+- **Payment Integration**
+  - Secure checkout process using Stripe.
 - **Data Validation & Security**
   - Comprehensive request body validation using `express-validator`.
   - Escaping and sanitization of user inputs.
 - **Database Integration**
   - Relational database schema designed with Sequelize ORM.
 
-## 🚧 Upcoming Features (Work In Progress)
-
-- Cart & Order Management.
-- Payment gateway integration.
-- Advanced product filtering and search.
-- User roles (Admin vs. Customer).
-
 ## 🛠️ Getting Started
 
 ### Prerequisites
+
 - Node.js (v18+)
 - PostgreSQL installed and running
 - Cloudinary account for image hosting
@@ -49,18 +50,21 @@ A robust and scalable e-commerce backend API built with **Node.js, Express, Type
 ### Installation
 
 1. **Clone the repository:**
+
    ```bash
    git clone <your-repository-url>
    cd e-commerce
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 3. **Set up Environment Variables:**
    Create a `.env` file in the root directory and add the necessary variables:
+
    ```env
    PORT=3000
    DB_HOST=localhost
@@ -74,6 +78,7 @@ A robust and scalable e-commerce backend API built with **Node.js, Express, Type
    ```
 
 4. **Build and Run:**
+
    ```bash
    # Development mode with hot-reloading
    npm run dev
@@ -88,6 +93,7 @@ A robust and scalable e-commerce backend API built with **Node.js, Express, Type
 ## 🧪 Testing
 
 To run the automated test suite using Mocha & Chai:
+
 ```bash
 npm run test
 ```
@@ -95,18 +101,29 @@ npm run test
 ## 📝 API Endpoints Overview
 
 ### Authentication (`/auth`)
+
 - `PUT /auth/signup` - Register a new user
 - `POST /auth/login` - Authenticate user and receive token
 - `DELETE /auth/delete/:userId` - Delete a user account
 
 ### Shop/Products (`/`)
+
 - `GET /` - Get home page data
-- `GET /products` - Retrieve all products
+- `GET /products` - Retrieve all products (supports pagination, search, category & price filtering)
 - `GET /product/:prodId` - Retrieve a specific product
 - `POST /product` - Create a new product (Requires Image Upload)
 - `PUT /product/:prodId` - Update an existing product
 - `DELETE /product/:prodId` - Delete a product
 
+### Cart & Orders (`/`)
+
+- `GET /cart` - Get user's cart
+- `POST /cart/:prodId` - Add a product to cart
+- `DELETE /cart/:prodId` - Remove a product from cart
+- `POST /checkout` - Create a Stripe checkout session
+- `GET /order` - Process successful checkout to create an order
+- `GET /orders` - Retrieve all user's orders
+
 ---
 
-*Designed and developed by [Mohamed Ali]*
+_Designed and developed by [Mohamed Ali]_
