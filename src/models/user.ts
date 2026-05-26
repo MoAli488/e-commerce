@@ -85,13 +85,15 @@ User.init(
     timestamps: true,
     hooks: {
       beforeDestroy: async (user) => {
-        // Dynamically import Product to avoid circular dependency
-        const { default: Product } = await import('./product.js');
-
-        await Product.destroy({
-          where: { UserId: user.id },
-          individualHooks: true,
+        const publicIds = (await user.getProducts({
+          attributes: ['image']
+        })).map((prod) => {
+          return prod.image.public_id;
         });
+
+        if (publicIds.length > 0) {
+          await cloudinary.api.delete_resources(publicIds);
+        }
 
         if (user.image?.public_id) {
           await cloudinary.uploader.destroy(user.image.public_id);
